@@ -1,0 +1,51 @@
+# Routes 
+# return json
+
+route: /api/v1/search/<int:zip_code>
+return: [{'id':'',
+	 'lat': '',
+	 'lon': '',
+	 'house_url': ''
+	 },] // 10, paging
+
+route: /api/v1/search/<int:zip_code>/<int: price_min>/<int: price_max>
+return: [{'id':'',
+	 'lat': '',
+	 'lon': '',
+	 'house_url': ''
+	 },] // 10, paging
+
+route: /api/v1/house/<int:id>
+return: [{'id': '',
+	 'number': '',	
+	 'street': '',				
+	 'Apt': '',
+	 'zip':'',
+	 'bedrooms': '',
+    	 'lat': '',
+ 	 'lon': '',
+	 'price':''
+	  }] // 1
+
+route: /api/v1/house/<int:id>/school
+return: [{'id': '',
+	'name': '',
+	'number': '',
+	'street': '',
+	'zip':'',
+	'lat': '',
+	'lon': ''
+	},] // 10
+
+route: /api/v1/crime_nine/<int:zip_code>
+return: [{'zip_code': '',	
+	'crime_type': '',
+	'crime_number':''
+	},] // 10
+
+route: /api/v1/crime_three/<int:zip_code>
+return: [{'zip_code': '',		
+	'crime_type': '',
+	'crime_number': ''
+	},] //	 10
+
