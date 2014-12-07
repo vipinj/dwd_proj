@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<!-- saved from url=(0108)file:///Users/bingbing/Library/Messages/Attachments/01/01/5057DB59-E181-429B-BF03-D69E4096B264/untitled.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta charset="utf-8">
+<style>
+
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+.zip {
+    stroke: #CCC;
+    stroke-width: .5px;
+  }
+.background {
+  fill: none;
+  pointer-events: all;
+}
+
+
+
+#states .active {
+  fill: orange;
+}
+
+
+
+</style>
+</head><body>
+
+<script src="./d3/queue.v1.min.js"></script>
+<script src="./d3/d3.v3.min.js"></script>
+<script src="./d3/d3.tip.v0.6.3.js"></script>
+
+<script src="./d3/topojson.v1.min.js"></script>
+<script>
+
+var tip = d3.tip()
+  .attr('class', 'd3-tip')
+  .offset([-10, 0])
+  .html(function(d) {
+    return "<strong>Frequency:</strong> <span style='color:red'>" + d.properties.name +"<br>"+ "</span>"+"<strong>Zipcode:</strong> <span style='color:red'>" + d.properties.zip + "<br>"+"</span>"+"<strong>Average Price:</strong> <span style='color:red'>" +"$"+ Math.random()*1000000 +"<br>";
+  })
+
+/* Invoke the tip in the context of your visualization */
+var color = d3.scale.quantize()
+  .range(["rgb(237,248,233)","rgb(186,228,179)","rgb(116,196,118)","rgb(49,163,84)","rgb(0,109,44)"])
+  .domain([1,6]);
+
+var width = 800,
+    height = 600,
+    centered;
+var projection = d3.geo.albers()
+    .scale(1000)
+    .translate([0, 300]);
+
+// Create a path generator.
+var path = d3.geo.path()
+    .projection(projection);
+
+// Compute the bounds of a feature of interest, then derive scale & translate.
+
+
+// Update the projection to use computed scale & translate.
+// projection
+//     .scale(s)
+//     .translate(t);
+
+var zoom = d3.behavior.zoom()
+    .translate([0, 0])
+    .scale(1)
+    .scaleExtent([1, 20])
+    .on("zoom", zoomed);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var dis = svg.append("g")
+    .attr("width", width)
+    .attr("height", height)
+    .on("click", clicked)
+    // .call(zoom)
+    .call(tip);
+
+function BinSearch(L,z){
+  imin = 0
+  imax = L.length
+  while(imin < imax){
+    imid = Math.floor((imin + imax) / 2)
+
+    if (z == L[imid]){return imid}
+    else if (z < L[imid]){imax = imid}
+    else{imin = imid + 1}
+      }
+  }
+
+var g = svg.append("g").   call(zoom)
+;
+
+ queue()
+    .defer(d3.json, "zips_us_topo.json")
+    .await(ready);
+    
+    function ready(error, us) {
+      var zip_arr = topojson.feature(us, us.objects.zip_codes_for_the_usa).features
+      var zip_list = []
+      for(i = 0;i <zip_arr.length;i++){
+        zip_list.push(zip_arr[i].properties.zip)}
+      var want = []
+      var z = BinSearch(zip_list,"00135")
+      console.log(z)
+      
+      want.push(topojson.feature(us, us.objects.zip_codes_for_the_usa).features[z])
+      g.append("g")
+      .attr("class", "counties")
+      .selectAll("path")
+      .data(want)
+      .enter().append("path")
+      .attr("class", "zip")
+      .attr("data-zip", function(d) {return d.properties.zip; })
+      .attr("data-state", function(d) {return d.properties.state; })
+      .attr("data-name", function(d) {return d.properties.name; })
+      .attr("d", path)
+      .style("fill",function(d){
+        return color(Math.floor(Math.random() * 6) + 1);})
+      .on("click", clicked)
+      .on('mouseover', showbar)
+      .on('mouseout', tip.hide);
+      
+
+      // var zip_arr = topojson.feature(us, us.objects.zip_codes_for_the_usa).features
+      // var zip_list = []
+      // for(i = 0;i <zip_arr.length;i++){
+      //   zip_list.push(zip_arr[i].properties.zip)}
+      
+      //   bb = BinSearch(zip_list,"00012")
+      
+      }
+
+
+
+
+
+function zoomed() {
+  g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+  g.select(".state-border").style("stroke-width", 1.5 / d3.event.scale + "px");
+  g.select(".county-border").style("stroke-width", .5 / d3.event.scale + "px");
+}
+
+function showbar(d){
+
+  tip.show(d);
+  console.log(d.properties.name);
+  var barchart = svg.append("rect")
+    .attr("x",function(){return width-300})
+    .attr("y",function(){return height-500})
+    .attr("width","200")
+    .attr("height","200")
+    .style("fill","#243545");
+
+}
+
+function clicked(d) {
+
+  var x, y, k;
+
+  if (d && centered !== d) {
+    var centroid = path.centroid(d);
+    x = centroid[0];
+    y = centroid[1];
+    k = 5;
+    centered = d;
+  } else {
+    x = width / 2;
+    y = height / 2;
+    k = 1;
+    centered = null;
+  }
+
+  g.selectAll("path")
+      .classed("active", centered && function(d) { return d === centered; });
+
+  g.transition()
+      .duration(750)
+      .attr("transform", function () { console.log ("translate(" + width / 2 + "," + height / 2 + ")scale(" + k + ")translate(" + -x + "," + -y + ")");"translate(" + width / 2 + "," + height / 2 + ")scale(" + k + ")translate(" + -x + "," + -y + ")"})
+      .style("stroke-width", 1.5 / k + "px");
+}
+
+</script>
+
+
+</body></html>
